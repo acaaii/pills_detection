@@ -424,6 +424,51 @@
     .shot-grid.cols-4{ grid-template-columns: 1fr 1fr; }
   }
 
+  /* ---------- PRELUDE PANEL ---------- */
+  .prelude{
+    padding: 30px 26px;
+    margin: 34px 0 0;
+    border: 1px solid var(--line-strong);
+    background: var(--panel);
+  }
+  .prelude-kicker{
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+  }
+  .prelude-intro{
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    margin: 0 0 16px;
+  }
+  .prelude-list{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .prelude-list li{
+    position: relative;
+    padding: 10px 0 10px 18px;
+    font-size: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .prelude-list li:first-child{ border-top: none; }
+  .prelude-list li::before{
+    content: "–";
+    position: absolute;
+    left: 0;
+    color: var(--ink-faint);
+  }
+  .prelude-note{
+    margin: 16px 0 0;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+  }
+
 </style>
 </head>
 <body>
@@ -433,17 +478,33 @@
     <div class="kicker">Experiment Log · Pill Detection</div>
     <h1 class="title">합성 데이터, 진짜처럼 만들면<br>정말 더 좋아질까</h1>
     <p class="lede">
-      bbox crop 합성에서 시작해 SAM 기반 정교 합성까지, 세 번의 시도를 거치며
-      알게 된 것들을 순서대로 정리했다. 결론보다 과정에 집중했다 —
+      Diffusion Model, CycleGAN, 단순 Albumentation 증강까지 거친 뒤,
+      bbox crop 합성에서 본격적으로 시작해 SAM 기반 정교 합성까지 이어진
+      세 번의 시도를 순서대로 정리했다. 결론보다 과정에 집중했다 —
       어디서 왜 틀렸는지가 다음 시도의 근거였기 때문이다.
     </p>
     <div class="meta-row">
-      <span>모델 <b>YOLO11s</b></span>
+      <span>모델 <b>YOLO11n/s/m 비교 → YOLO11s 채택</b></span>
       <span>원본 학습 데이터 <b>217장</b></span>
       <span>합성 방식 <b>bbox crop → SAM 정교 합성</b></span>
       <span>현재 상태 <b>3차 재설계 중</b></span>
     </div>
   </header>
+
+  <section class="prelude">
+    <div class="prelude-kicker">Before this log · 사전 검토 (요약)</div>
+    <p class="prelude-intro">
+      본격적으로 bbox crop 합성부터 기록을 시작하기 전, 아래 네 가지를
+      먼저 짧게 훑고 지나갔다.
+    </p>
+    <ul class="prelude-list">
+      <li><b>Diffusion Model 기반 합성</b> — 생성형 모델로 알약 이미지를 직접 만들어보는 방향으로 짧게 시도.</li>
+      <li><b>CycleGAN 기반 합성</b> — 도메인 변환 방식으로도 합성을 시도해봤으나, 이후 방향을 bbox crop 쪽으로 전환.</li>
+      <li><b>단순 Albumentation 증강</b> — 별도 합성 없이 기본 증강만 적용한 baseline도 함께 확인.</li>
+      <li><b>모델 크기 비교</b> — YOLO11n / YOLO11s / YOLO11m을 나란히 비교한 결과, <b>YOLO11s</b>가 가장 안정적이고 좋은 성능을 보여 이후 모든 실험의 기준 모델로 채택했다.</li>
+    </ul>
+    <p class="prelude-note">이 아래부터는 전부 YOLO11s 기준 기록이다.</p>
+  </section>
 
   <div class="summary-strip">
     <div class="summary-cell">
