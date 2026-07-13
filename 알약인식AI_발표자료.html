@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>알약 인식 AI 모델 개발</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#111111;
+    --white:#ffffff;
+    --gray-900:#1f1f1f;
+    --gray-100:#f2f2f2;
+    --gray-300:#d9d9d9;
+    --label-gray:#9a9a9a;
+    --body-gray:#5a5a5a;
+    --good:#1faa59;
+    --bad:#e5484d;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Noto Sans KR', sans-serif;
+    background:var(--white);
+    color:var(--black);
+    overflow-x:hidden;
+  }
+  section{
+    min-height:100vh;
+    position:relative;
+    padding:3.2rem clamp(1.5rem, 6vw, 5rem);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  section.dark{ background:var(--black); color:var(--white); }
+  section.light{ background:var(--white); color:var(--black); }
+
+  .eyebrow-row{
+    position:absolute;
+    top:2.2rem;
+    left:clamp(1.5rem, 6vw, 5rem);
+    right:clamp(1.5rem, 6vw, 5rem);
+    display:flex;
+    justify-content:space-between;
+    font-size:0.8rem;
+    font-weight:700;
+    letter-spacing:0.12em;
+    color:var(--label-gray);
+  }
+  .dark .eyebrow-row{ color:#8a8a8a; }
+
+  .footer-row{
+    position:absolute;
+    bottom:2rem;
+    left:clamp(1.5rem, 6vw, 5rem);
+    right:clamp(1.5rem, 6vw, 5rem);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    font-size:0.85rem;
+  }
+  .footer-left{ font-weight:700; }
+  .footer-right{ color:var(--label-gray); }
+  .dark .footer-right{ color:#8a8a8a; }
+
+  h1.hero{
+    font-weight:900;
+    font-size:clamp(2.6rem, 7vw, 5.6rem);
+    line-height:1.03;
+    letter-spacing:-0.02em;
+  }
+  h2.title{
+    font-weight:900;
+    font-size:clamp(2rem, 4.5vw, 2.8rem);
+    line-height:1.12;
+    letter-spacing:-0.01em;
+    max-width:14ch;
+  }
+  .sub{
+    margin-top:1.2rem;
+    font-size:1rem;
+    color:var(--body-gray);
+    max-width:52ch;
+    line-height:1.55;
+  }
+  .dark .sub{ color:#bfbfbf; }
+
+  .tags{ display:flex; flex-wrap:wrap; gap:0.6rem; margin-top:2.2rem; }
+  .tag{
+    padding:0.55rem 1.1rem;
+    border-radius:999px;
+    font-size:0.85rem;
+    font-weight:700;
+    background:var(--gray-900);
+    color:var(--white);
+  }
+  .tag.on{ background:var(--white); color:var(--black); }
+
+  .fade{ opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease; }
+  .fade.in{ opacity:1; transform:translateY(0); }
+
+  .callout{
+    background:var(--gray-100);
+    padding:1.6rem 2rem;
+    margin-top:2.2rem;
+    max-width:56rem;
+    font-size:1rem;
+    line-height:1.6;
+  }
+  .callout.strong{ background:var(--black); color:var(--white); font-weight:700; }
+
+  .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:1.6rem; margin-top:2.2rem; max-width:64rem; }
+  @media (max-width:800px){ .two-col{ grid-template-columns:1fr; } }
+  .card{ background:var(--gray-100); padding:1.8rem; }
+  .card h3{ font-size:1.15rem; font-weight:700; margin-bottom:0.7rem; }
+  .card p{ font-size:0.92rem; color:var(--body-gray); line-height:1.55; }
+
+  .num-list{ margin-top:2.2rem; max-width:56rem; display:flex; flex-direction:column; gap:1.3rem; }
+  .num-item{ display:flex; align-items:flex-start; gap:1rem; }
+  .num-badge{
+    flex:none; width:2.1rem; height:2.1rem; border-radius:50%;
+    background:var(--black); color:var(--white);
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.9rem; font-weight:700;
+  }
+  .num-item h4{ font-size:1.05rem; font-weight:700; margin-bottom:0.25rem; }
+  .num-item p{ font-size:0.9rem; color:var(--body-gray); }
+
+  .pipeline{
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    gap:0.5rem;
+    margin-top:2rem;
+    max-width:72rem;
+  }
+  @media (max-width:900px){ .pipeline{ grid-template-columns:repeat(2, 1fr); } }
+  .pipe-step{ padding:1.4rem 1.1rem; min-height:190px; display:flex; flex-direction:column; gap:0.6rem; }
+  .pipe-step.even{ background:var(--gray-100); }
+  .pipe-step.odd{ background:var(--black); color:var(--white); }
+  .pipe-step .step-n{ font-weight:900; font-size:1.3rem; color:var(--gray-300); }
+  .pipe-step.odd .step-n{ color:#4a4a4a; }
+  .pipe-step h4{ font-size:0.98rem; font-weight:700; }
+  .pipe-step p{ font-size:0.78rem; line-height:1.4; color:var(--body-gray); }
+  .pipe-step.odd p{ color:#bfbfbf; }
+
+  table.cmp{ border-collapse:collapse; margin-top:2rem; max-width:40rem; font-size:0.85rem; }
+  table.cmp th, table.cmp td{ border:1px solid var(--gray-300); padding:0.7rem 0.9rem; text-align:left; vertical-align:top; }
+  table.cmp th{ background:var(--black); color:var(--white); font-weight:700; }
+  table.cmp td:first-child{ background:var(--gray-100); font-weight:700; }
+
+  .result-wrap{ display:flex; gap:2.5rem; flex-wrap:wrap; margin-top:2rem; align-items:flex-start; }
+  .stat-box{ background:var(--gray-100); padding:1.8rem 2rem; min-width:230px; }
+  .stat-label{ font-size:0.8rem; font-weight:700; color:var(--body-gray); letter-spacing:0.05em; }
+  .stat-num{ font-weight:900; font-size:2.6rem; margin:0.3rem 0; }
+  .stat-sub{ font-size:0.85rem; color:var(--body-gray); }
+  .stat-num.dim{ font-size:2rem; color:#6b6b6b; }
+  .note{ max-width:32rem; font-size:0.88rem; color:var(--body-gray); line-height:1.6; }
+
+  .versus{ display:flex; gap:3rem; margin-top:2.2rem; flex-wrap:wrap; }
+  .versus .col{ flex:1; min-width:260px; }
+  .versus .label{ font-size:0.8rem; font-weight:700; letter-spacing:0.1em; color:#8a8a8a; }
+  .versus .big-num{ font-weight:900; font-size:clamp(2.6rem,6vw,4.2rem); margin:0.4rem 0; }
+  .versus .good{ color:var(--good); }
+  .versus .bad{ color:var(--bad); }
+  .versus .desc{ font-size:0.9rem; color:#bfbfbf; line-height:1.5; max-width:26ch; }
+  .divider-v{ width:1px; background:#3a3a3a; align-self:stretch; }
+
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:2.2rem; max-width:70rem; }
+  @media (max-width:800px){ .grid2{ grid-template-columns:1fr; } }
+  .grid2 .box{ background:var(--white); color:var(--black); padding:1.6rem; min-height:150px; }
+  .grid2 .box h4{ font-size:1.05rem; font-weight:700; margin-bottom:0.5rem; }
+  .grid2 .box p{ font-size:0.88rem; color:var(--body-gray); line-height:1.5; }
+
+  .scroll-hint{
+    position:absolute; bottom:2rem; left:50%; transform:translateX(-50%);
+    font-size:0.75rem; color:var(--label-gray); letter-spacing:0.08em;
+  }
+</style>
+</head>
+<body>
+
+<!-- 01 : TITLE -->
+<section class="dark" id="s1">
+  <div class="eyebrow-row"><span>TEAM PROJECT</span><span>01 / 09</span></div>
+  <h1 class="hero fade">PILL<br>RECOGNITION AI</h1>
+  <p class="sub fade">알약 인식 AI 모델 개발 — 제공된 알약에 대한 보장된 성능과 빠른 속도를 목표로, 실전 일반화까지 검증한 팀 프로젝트 기록</p>
+  <div class="tags fade">
+    <span class="tag on">팀 프로젝트</span>
+    <span class="tag">Object Detection</span>
+    <span class="tag">YOLO11 / RT-DETR</span>
+    <span class="tag">Kaggle</span>
+  </div>
+  <div class="footer-row">
+    <span class="footer-left">Pill Detection Team</span>
+    <span class="footer-right">Model Dev / Data Pipeline</span>
+  </div>
+</section>
+
+<!-- 02 : GOAL -->
+<section class="light" id="s2">
+  <div class="eyebrow-row"><span>Goal</span><span>02 / 09</span></div>
+  <h2 class="title fade">우리는 무엇을 목표로 할까</h2>
+  <div class="callout fade">
+    실제 서비스라면 추론 속도, 일반화 성능, 특정 알약에 대한 성능 중 무엇이 중요할까?<br>
+    우리 팀은 정보가 제공된 알약들에 대한 <strong>“보장된 성능”</strong>과 <strong>“빠른 속도”</strong>를 목표로 설정했다.
+  </div>
+  <div class="num-list fade">
+    <div class="num-item">
+      <div class="num-badge">1</div>
+      <div><h4>데이터 분석팀</h4><p>데이터를 직접 뜯어보며 구조와 패턴, 편향을 파악</p></div>
+    </div>
+    <div class="num-item">
+      <div class="num-badge">2</div>
+      <div><h4>모델 베이스라인팀</h4><p>YOLO / RT-DETR 등 베이스라인 모델을 설계하고 검증</p></div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-left">Point</span>
+    <span class="footer-right">역할 분담: 데이터 vs 모델 베이스라인</span>
+  </div>
+</section>
+
+<!-- 03 : HYPOTHESIS -->
+<section class="light" id="s3">
+  <div class="eyebrow-row"><span>Hypothesis</span><span>03 / 09</span></div>
+  <h2 class="title fade">실전을 가정한 첫 번째 시도</h2>
+  <div class="two-col fade">
+    <div class="card">
+      <h3>문제 인식</h3>
+      <p>test set을 열어보기 전, 실제로 서비스를 서빙한다면 일반인이 무작위 배경에서 찍은 비정제 이미지를 분류해야 할 것이라 예상했다.</p>
+    </div>
+    <div class="card">
+      <h3>채택한 해결책</h3>
+      <p>CycleGAN, Diffusion Model을 활용해 알약의 형태는 유지한 채 배경만 다양하게 증강하는 방법을 채택했다.</p>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-left">Memo</span>
+    <span class="footer-right">배경 증강 = 일반화 성능 향상 전략</span>
+  </div>
+</section>
+
+<!-- 04 : PIVOT -->
+<section class="light" id="s4">
+  <div class="eyebrow-row"><span>Pivot</span><span>04 / 09</span></div>
+  <h2 class="title fade">가설이 무너진 결정적 순간</h2>
+  <div class="num-list fade" style="margin-top:2rem;">
+    <div class="num-item"><div class="num-badge" style="background:transparent;color:var(--gray-300);font-weight:900;font-size:1.3rem;">1</div><p style="font-size:0.98rem;color:var(--black);">배경 증강 데이터를 train에 합쳐 학습 → val 점수가 오히려 크게 하락</p></div>
+    <div class="num-item"><div class="num-badge" style="background:transparent;color:var(--gray-300);font-weight:900;font-size:1.3rem;">2</div><p style="font-size:0.98rem;color:var(--black);">원인을 파악하고자 test set을 오픈 (주어진 과제를 정확히 이해하기 위함)</p></div>
+    <div class="num-item"><div class="num-badge" style="background:transparent;color:var(--gray-300);font-weight:900;font-size:1.3rem;">3</div><p style="font-size:0.98rem;color:var(--black);">test set이 train set과 배경·알약 구조 면에서 이미 매우 유사하다는 것을 확인</p></div>
+  </div>
+  <div class="callout strong fade">Insight → 배경 증강은 우리에게 주어진 실제 과제와 맞지 않다고 판단, 방향을 전환한다.</div>
+  <div class="footer-row">
+    <span class="footer-left">Pivot Point</span>
+    <span class="footer-right">가설 → 검증 → 방향 전환</span>
+  </div>
+</section>
+
+<!-- 05 : DATA PREP -->
+<section class="light" id="s5">
+  <div class="eyebrow-row"><span>Data Prep</span><span>05 / 09</span></div>
+  <h2 class="title fade">데이터를 다시 쌓다</h2>
+  <div class="num-list fade">
+    <div class="num-item">
+      <div class="num-badge">1</div>
+      <div><h4>AI Hub 데이터 확보</h4><p>경구약제 데이터 약 5,800장을 추가로 확보해 데이터 양을 늘림</p></div>
+    </div>
+    <div class="num-item">
+      <div class="num-badge">2</div>
+      <div><h4>유사 이미지 제외</h4><p>유사도 체크로 test set과 겹치는 이미지 제외 (금지된 TL-2 조합 외에도 유사 이미지 존재)</p></div>
+    </div>
+    <div class="num-item">
+      <div class="num-badge">3</div>
+      <div><h4>직접 검수</h4><p>bbox 오류 및 미검출 이미지를 육안으로 검수해 약 350여 장 제거</p></div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-left">Point</span>
+    <span class="footer-right">많을수록 좋다, 단 정확해야 한다</span>
+  </div>
+</section>
+
+<!-- 06 : SYNTHETIC DATA PIPELINE -->
+<section class="light" id="s6">
+  <div class="eyebrow-row"><span>Synthetic Data</span><span>06 / 09</span></div>
+  <h2 class="title fade" style="max-width:16ch;">진짜 같은 가짜 데이터 만들기</h2>
+  <p class="sub fade">test와 train 이미지가 유사하다는 인사이트를 역이용해, 유사한 배경의 합성 데이터를 직접 제작했다.</p>
+  <div class="pipeline fade">
+    <div class="pipe-step even"><div class="step-n">01</div><h4>누끼 따기</h4><p>SAM으로 train 내 모든 알약 분리</p></div>
+    <div class="pipe-step odd"><div class="step-n">02</div><h4>배경 합성</h4><p>포토샵으로 유사 배경 제작, 3~4개씩 배치</p></div>
+    <div class="pipe-step even"><div class="step-n">03</div><h4>조명 입히기</h4><p>배경색 추출 후 스크린 기법으로 조명 반영</p></div>
+    <div class="pipe-step odd"><div class="step-n">04</div><h4>명암·그림자</h4><p>알약 내부 명도 차 계산, 그림자 생성</p></div>
+    <div class="pipe-step even"><div class="step-n">05</div><h4>무작위 회전</h4><p>알약을 랜덤 회전시켜 다양성 확보</p></div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-left">Pipeline</span>
+    <span class="footer-right">동시 진행: YOLO / RT-DETR 비교 실험</span>
+  </div>
+</section>
+
+<!-- 07 : MODEL COMPARE + RESULT -->
+<section class="light" id="s7">
+  <div class="eyebrow-row"><span>Model &amp; Result</span><span>07 / 09</span></div>
+  <h2 class="title fade">YOLO11s vs RT-DETR</h2>
+  <table class="cmp fade">
+    <tr><th></th><th>YOLO 계열</th><th>RT-DETR</th></tr>
+    <tr><td>구조</td><td>CNN 기반, 앵커/앵커프리 검출기</td><td>Transformer 기반 실시간 검출기</td></tr>
+    <tr><td>강점</td><td>빠른 추론 속도, 가벼운 모델</td><td>복잡한 문맥·전역 관계 포착에 유리</td></tr>
+    <tr><td>약점</td><td>작은 객체·겹침에 다소 취약</td><td>상대적으로 무겁고 느릴 수 있음</td></tr>
+  </table>
+  <div class="result-wrap fade">
+    <div class="stat-box">
+      <div class="stat-label">KAGGLE SCORE</div>
+      <div class="stat-num">0.9908</div>
+      <div class="stat-sub">YOLO11s</div>
+      <div class="stat-num dim" style="margin-top:0.8rem;">0.9864</div>
+      <div class="stat-sub">RT-DETR</div>
+    </div>
+    <p class="note">검증 완료 데이터만(증강 없이) 사용한 결과. test 약 800장, 알약 약 3,200개 규모에서는 이 이상의 점수 향상이 사실상 bbox 미세 오차 수준 — 추가 최적화의 실효성은 낮다고 판단.</p>
+  </div>
+  <div class="footer-row">
+    <span class="footer-left">Result</span>
+    <span class="footer-right">1차 목표 달성: 제공된 알약에 대한 고성능</span>
+  </div>
+</section>
+
+<!-- 08 : REALITY CHECK -->
+<section class="dark" id="s8">
+  <div class="eyebrow-row"><span>Reality Check</span><span>08 / 09</span></div>
+  <h2 class="title fade" style="color:var(--white);">대회 성적과 실전은 달랐다</h2>
+  <div class="versus fade">
+    <div class="col">
+      <div class="label">KAGGLE</div>
+      <div class="big-num good">0.9908</div>
+      <div class="desc">제공된 알약 데이터 기준</div>
+    </div>
+    <div class="divider-v"></div>
+    <div class="col">
+      <div class="label">실제 촬영 데이터</div>
+      <div class="big-num bad">0.214</div>
+      <div class="desc">팀원이 직접 촬영한 이미지 기준 — 검출조차 잘 되지 않음</div>
+    </div>
+  </div>
+  <div class="callout strong fade" style="background:var(--gray-900);">Insight → 높은 대회 점수에도 불구하고 일반화 성능이 부족함을 확인. 다음 과제는 “일반화”다.</div>
+  <div class="footer-row">
+    <span class="footer-left">Turning Point</span>
+    <span class="footer-right">우리는 어떻게 더 발전시킬 수 있을까</span>
+  </div>
+</section>
+
+<!-- 09 : NEXT STEP -->
+<section class="dark" id="s9">
+  <div class="eyebrow-row"><span>Next Step</span><span>09 / 09</span></div>
+  <h2 class="title fade" style="color:var(--white);">일반화 성능을 위한 다음 실험</h2>
+  <div class="grid2 fade">
+    <div class="box"><h4>실사 배경 합성</h4><p>경구약제 단일 알약 이미지를 실제와 유사한 배경에 합성해 학습 데이터 다양성 확보</p></div>
+    <div class="box"><h4>오토라벨링 도입</h4><p>대량 데이터 확보를 위해 자동 라벨링 파이프라인을 구축, 검수 비용 절감</p></div>
+    <div class="box"><h4>대량 데이터 확보</h4><p>합성 + 오토라벨링을 결합해 실전과 유사한 데이터 규모를 빠르게 확장</p></div>
+    <div class="box"><h4>오토라벨링 실험 결과</h4><p>오토라벨링 품질 및 모델 성능 개선 효과에 대한 실험 결과 공유</p></div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-left">To be continued</span>
+    <span class="footer-right">Pill Detection Team</span>
+  </div>
+</section>
+
+<script>
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){ e.target.classList.add('in'); }
+    });
+  }, { threshold: 0.2 });
+  document.querySelectorAll('.fade').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
