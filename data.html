@@ -93,7 +93,7 @@
   /* ---------- SUMMARY STRIP ---------- */
   .summary-strip{
     display:grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     border-bottom: 1px solid var(--line);
   }
   .summary-cell{
@@ -485,9 +485,9 @@
     </p>
     <div class="meta-row">
       <span>모델 <b>YOLO11n/s/m 비교 → YOLO11s 채택</b></span>
-      <span>원본 학습 데이터 <b>217장</b></span>
+      <span>원본 학습 데이터 <b>217장 → 5,450여 장</b></span>
       <span>합성 방식 <b>bbox crop → SAM 정교 합성</b></span>
-      <span>현재 상태 <b>3차 재설계 중</b></span>
+      <span>현재 상태 <b>정제 원본 단독 학습이 최고 성능</b></span>
     </div>
   </header>
 
@@ -509,14 +509,18 @@
   <div class="summary-strip">
     <div class="summary-cell">
       <span class="n">00 → 04</span>
-      <span class="l">데이터 설계 3회 변경 + 후처리 로드맵 1건</span>
+      <span class="l">총 네 번의 데이터 설계·보강 시도</span>
     </div>
     <div class="summary-cell">
       <span class="n">0.95</span>
       <span class="l">2차 시도 val 성능 (기대보다 저조)</span>
     </div>
     <div class="summary-cell">
-      <span class="n">class 0</span>
+      <span class="n">0.9908</span>
+      <span class="l">정제된 원본 5,450여 장 단독 학습 성능</span>
+    </div>
+    <div class="summary-cell">
+      <span class="n">class 1900</span>
       <span class="l">3차 시도부터 합성 대상에서 제외</span>
     </div>
   </div>
@@ -731,11 +735,11 @@
     <section class="entry">
       <div class="stage-num">03</div>
       <div class="stage-tag">Attempt 03 · 재설계 (진행 예정)</div>
-      <h2 class="stage-title">class 0 제외하고 합성 자체를 다시</h2>
+      <h2 class="stage-title">class 1900 제외하고 합성 자체를 다시</h2>
       <p>
         추출 단계에서 균형을 맞추는 대신, <b>합성을 생성하는 단계</b>에서
-        문제를 없애기로 방향을 바꿨다. 원본 train만 봐도 class 0의
-        빈도가 압도적으로 높기 때문에, 이번에는 아예 class 0을
+        문제를 없애기로 방향을 바꿨다. 원본 train만 봐도 class 1900의
+        빈도가 압도적으로 높기 때문에, 이번에는 아예 class 1900을
         합성 대상에서 제외한다.
       </p>
       <p>
@@ -745,74 +749,71 @@
       <span class="verdict pending">진행 예정 — 합성 파이프라인 초기화 후 재생성</span>
     </section>
 
-    <!-- ENTRY 4 : 후처리 로드맵 -->
+    <!-- ENTRY 4 : 원본 데이터 보강 -->
     <section class="entry">
       <div class="stage-num">04</div>
-      <div class="stage-tag">Next · 학습 이후 적용 예정</div>
-      <h2 class="stage-title">데이터를 다시 만드는 것과 별개로 — 후처리 단에서 끌어올릴 것들</h2>
+      <div class="stage-tag">Attempt 04 · 원본 데이터 자체를 보강</div>
+      <h2 class="stage-title">5,800장 확보 → 350여 장 수작업 제외 → 0.9908</h2>
       <p>
-        3차 합성 데이터로 재학습을 진행하는 것과 병행해서, 모델 자체는 그대로 두고
-        추론·후처리 단계에서 성능을 더 끌어올릴 수 있는 방법들을 정리했다.
-        비용이 적게 드는 것부터 순서대로 적용해볼 계획이다.
+        3차 재설계 이후, 합성 로직을 더 다듬는 대신 원본 train data 자체를
+        보강하는 방향으로 전환했다. 계기는 test set을 직접 열어본 것이었다 —
+        <b>test set에는 기존 train set에 아예 존재하지 않는 알약 종류가 다수
+        포함되어 있었다.</b> 아무리 합성·증강을 정교하게 해도, 애초에 본 적
+        없는 알약을 예측할 수는 없기 때문에, 부족한 종류를 메우기 위해
+        경구약제 데이터를 추가로 확보해 약 5,800장 수준으로 train data를
+        키웠다. 그리고 이 5,800장 전부를 하나하나 눈으로 직접 검토해,
+        bbox가 잘못 잡혔거나 아예 검출이 빠진 이미지 약 350여 장을 제외했다.
       </p>
 
-      <div class="algo">
-        <div class="algo-label">Next 01 · 재학습 없이 바로 적용 가능</div>
-        <h3 class="algo-title">NMS threshold 최적화 (IoU / confidence grid search)</h3>
+      <table class="metrics">
+        <tr><th>구분</th><th>알약 종(class) 수</th></tr>
+        <tr><td>기존 train data</td><td class="num">56종</td></tr>
+        <tr><td>보강 후 train data</td><td class="num">93종</td></tr>
+        <tr><td>test data</td><td class="num">74종</td></tr>
+      </table>
+      <p class="gallery-caption">test data의 74종 중 상당수가 기존 56종 안에 없었고, 보강 후 93종으로 test set의 종류를 대부분 커버할 수 있게 됐다.</p>
+
+      <table class="metrics">
+        <tr><th>항목</th><th>값</th></tr>
+        <tr><td>보강된 train data</td><td class="num">≈ 5,800장</td></tr>
+        <tr><td>수작업 검토 후 제외</td><td class="num">≈ 350장 (bbox 오류 · 미검출)</td></tr>
+        <tr><td>최종 사용 데이터</td><td class="num">≈ 5,450장</td></tr>
+        <tr><td>합성·증강 여부</td><td class="num">없음 — 정제된 원본만 사용</td></tr>
+        <tr><td>모델</td><td class="num">YOLO11s</td></tr>
+      </table>
+
+      <div class="box finding">
+        <div class="box-label">발견 — 정제된 원본만으로 0.9908</div>
         <p>
-          NMS(Non-Maximum Suppression)는 한 객체에 대해 겹쳐서 검출된 여러 박스 중
-          confidence가 가장 높은 박스만 남기고 나머지를 억제하는 후처리 알고리즘이다.
-          이때 기준이 되는 두 값이 있다.
+          합성이나 증강을 전혀 섞지 않고, 정제된 원본 데이터만으로 학습했더니
+          <b>0.9908</b>이라는 높은 점수가 나왔다. 이 시점에서
+          "합성 데이터로 클래스 불균형을 해소하거나 일반화 성능을
+          조금이라도 더 끌어올리는 것이 큰 의미가 없을 수 있다"고 판단했다.
         </p>
-        <ol class="algo-steps">
-          <li><b>IoU threshold</b> — 두 박스를 "같은 객체의 중복 검출"로 판단하는 겹침 기준. NMS가 지우는 중복 박스는 실제로 두 가지 경우에서 나오는데, (a) 하나의 알약에 대해 모델이 grid cell·anchor 단위로 스스로 여러 박스를 뱉는 경우와, (b) 서로 붙어 있거나 겹친 두 물체를 모델이 헷갈리는 경우다. 우리 데이터는 알약끼리 물리적으로 겹치지 않기 때문에 (b)는 거의 발생하지 않고, 주로 (a) 때문에 NMS가 필요하다. 따라서 IoU threshold는 꽤 넓은 범위에서 안정적으로 동작할 가능성이 높고, 튜닝 우선순위는 상대적으로 낮다.</li>
-          <li><b>Confidence threshold</b> — 최종적으로 남길 박스의 최소 신뢰도. 낮추면 recall이 오르는 대신 오탐이 늘고, 높이면 반대로 정밀해지는 대신 놓치는 알약이 늘어난다. 겹침 여부와 무관하게 precision-recall 트레이드오프를 직접 좌우하는 값이라, 우리 도메인에서는 grid search의 실질적인 무게중심이 IoU threshold보다 이쪽에 있다.</li>
-          <li>그래도 두 값을 함께 val set에서 grid로 조합해가며 mAP가 가장 높은 지점을 확인하는 것 자체는 여전히 유효하다 — 다만 "알약이 겹쳐서"가 아니라 "모델이 같은 알약에 중복 박스를 내서" NMS가 필요하다는 점을 구분해서 접근한다.</li>
-        </ol>
       </div>
 
-      <div class="algo">
-        <div class="algo-label">Next 02 · 추론 단 개선</div>
-        <h3 class="algo-title">TTA (Test-Time Augmentation) + WBF</h3>
+      <p>
+        그럼에도 지금까지와 동일한 합성 로직으로 클래스 불균형을 보완하는
+        데이터를 만들어 함께 학습해보았다.
+      </p>
+
+      <div class="box finding">
+        <div class="box-label">발견 — 합성을 더했더니 오히려 Kaggle 점수 하락</div>
         <p>
-          추론 시점에 원본 이미지 한 장만 넣는 대신, 같은 이미지를 여러 형태로
-          변형해서 함께 추론에 투입하고, 그 결과들을 다시 하나로 합치는 방법이다.
+          val 성능과 별개로, <b>Kaggle 리더보드 기준 점수는 합성 데이터를
+          추가했을 때 오히려 더 낮게</b> 나왔다. 정제된 원본만 쓴 쪽이 더 나았다.
         </p>
-        <ol class="algo-steps">
-          <li><b>Multi-scale</b> — 이미지를 여러 해상도로 리사이즈해서 각각 추론한다. 알약마다 실제 크기 차이가 크기 때문에, 특정 스케일에서 놓치는 작은/큰 알약을 다른 스케일에서 잡아낼 수 있다.</li>
-          <li><b>Flip</b> — 좌우 반전한 이미지도 함께 추론한다. 모델이 특정 방향에 편향된 예측을 하고 있었다면, 반전 추론이 이를 상쇄해준다.</li>
-          <li><b>WBF(Weighted Box Fusion)</b> — 이렇게 얻은 여러 버전의 예측 박스들을 NMS처럼 "하나만 남기고 버리는" 방식이 아니라, 겹치는 박스들의 좌표와 confidence를 가중평균해서 <b>새로운 박스를 하나 만들어낸다</b>. 즉 NMS는 선택(selection), WBF는 좌표 자체를 개선(refinement)하는 방식이라 박스 정밀도 개선에 특히 효과적이다.</li>
-        </ol>
       </div>
 
-      <div class="algo">
-        <div class="algo-label">Next 03 · 여러 모델 결합</div>
-        <h3 class="algo-title">모델 앙상블 (2~3개 backbone/구조)</h3>
-        <p>
-          서로 다른 backbone이나 구조를 가진 모델 2~3개를 각각 학습시킨 뒤,
-          추론 결과를 함께 합친다.
-        </p>
-        <ol class="algo-steps">
-          <li>구조가 다른 모델은 서로 다른 편향과 실수 패턴을 갖는다 — 한 모델이 놓치는 케이스를 다른 모델이 잡아내는 식으로 서로를 보완한다.</li>
-          <li>각 모델의 예측 박스를 모아, TTA에서 쓴 것과 동일한 <b>WBF</b>로 최종 박스를 산출한다. 즉 "여러 augmentation의 결과를 합치는 것"과 "여러 모델의 결과를 합치는 것"에 같은 융합 원리를 재사용하는 셈이다.</li>
-        </ol>
-      </div>
+      <p class="sub">
+        → 결론: 이 과제 자체가 애초에 <b>overfitting될 수밖에 없는 구조의 과제</b>였다고
+        판단된다. 데이터를 충분히 정제하고 나면, 추가적인 합성이 일반화에
+        기여하기보다 오히려 학습 신호를 흐트러뜨릴 가능성이 더 크다는 뜻이다.
+      </p>
 
-      <div class="algo">
-        <div class="algo-label">Next 04 · 도메인 특화 후처리</div>
-        <h3 class="algo-title">Bbox refinement — contour 기반 tight bbox 재계산</h3>
-        <p>
-          알약은 원, 타원, 캡슐형 등 형태가 단순하고 예측 가능하다는 도메인 특성을 그대로 활용하는 방법이다.
-        </p>
-        <ol class="algo-steps">
-          <li>모델이 예측한 bbox 영역 안에서 segmentation mask를 얻는다 (SAM 등으로).</li>
-          <li>그 마스크의 contour(윤곽선)를 추출하고, 윤곽에 꼭 맞는 최소 외접 사각형을 다시 계산해 기존 bbox를 대체한다.</li>
-          <li>Detection 모델이 뱉는 bbox는 실제로 여유 있게(느슨하게) 잡히는 경우가 많은데, 이렇게 윤곽 기반으로 조여주면 <b>high IoU 구간(예: mAP50-95 중 IoU 0.75~0.95)</b>의 정밀도가 크게 개선된다. 형태가 복잡한 객체보다 알약처럼 형태가 단순한 객체에서 특히 효과가 크다.</li>
-        </ol>
-      </div>
-
-      <span class="verdict pending">적용 예정 — 3차 재학습 결과가 나온 뒤 순차 적용</span>
+      <span class="verdict pass">완료 — 정제된 원본 단독 학습이 최고 성능, 합성 추가는 역효과</span>
     </section>
+
 
   </div>
 
@@ -822,12 +823,12 @@
       <li><b>합성 데이터가 자연스러울수록 좋은 것은 아니다.</b> 노이즈가 너무 적으면 모델이 엉뚱한 것(경계 픽셀)을 학습한다.</li>
       <li><b>원본 데이터는 대체 불가.</b> 아무리 합성을 정교하게 해도 원본 train 혼합은 필수다.</li>
       <li><b>클래스 균형은 생성 단계에서 잡아야 한다.</b> 다중 클래스 이미지 구조에서는 추출 단계 후처리로 균형을 맞추기 어렵다.</li>
-      <li><b>이미 불균형한 원본이라면, 합성에서까지 다수 클래스를 더 늘릴 이유가 없다.</b> class 0 제외는 그 결론에서 나온 결정이다.</li>
-      <li><b>데이터만으로 끝이 아니다.</b> 3차 재학습과 별개로, NMS threshold 튜닝 → TTA+WBF → 모델 앙상블 → contour 기반 bbox refinement 순으로 후처리 단 개선도 함께 적용해볼 예정이다.</li>
+      <li><b>이미 불균형한 원본이라면, 합성에서까지 다수 클래스를 더 늘릴 이유가 없다.</b> class 1900 제외는 그 결론에서 나온 결정이다.</li>
+      <li><b>결국 가장 크게 성능을 끌어올린 건 합성이 아니라 원본 데이터의 양과 품질이었다.</b> test set에 없는 알약 종류를 메우기 위해 5,800장을 확보하고, 350여 장의 오류를 직접 눈으로 걸러낸 것만으로 0.9908이 나왔다. 그 위에 합성을 더했을 때는 Kaggle 점수가 오히려 낮아졌다 — 이 과제는 애초에 overfitting에 취약한 구조였다는 뜻이다.</li>
     </ol>
 
     <div class="signoff">
-      last updated · 2026-07-06 — 다음 업데이트는 3차 합성 데이터 재학습 결과 및 후처리 적용 결과가 나오는 대로.
+      last updated · 2026-07-13
     </div>
   </footer>
 </div>
