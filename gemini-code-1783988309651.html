@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>카탈로그 특화에서 일반화까지 — 알약 객체탐지 AI 프로젝트</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css" />
+<style>
+  :root {
+    --ink: #000000;
+    --paper: #ffffff;
+    --muted: #555555;
+    --faint: #aaaaaa;
+    --line: #000000;
+    --row: #f4f4f4;
+    --dark: #0b0b0b;
+    --dark-card: #151515;
+    --dark-muted: #888888;
+  }
+  
+  * {
+    box-sizing: border-box; 
+    border-radius: 0 !important; /* 모서리 둥근 효과 완전 제거 */
+    letter-spacing: -0.04em; /* 좁은 자간 설정 */
+  }
+  
+  body {
+    margin: 0;
+    background: #e5e5e5;
+    font-family: 'Pretendard Variable', 'Pretendard', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 50px 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  .deck { display: flex; flex-direction: column; gap: 40px; align-items: center; }
+  
+  /* 1920x1080 슬라이드 기본 규격 및 엄격한 패딩 설정 */
+  .slide {
+    width: 1920px;
+    height: 1080px;
+    background: var(--paper);
+    position: relative;
+    overflow: hidden;
+    padding: 90px 100px 80px 100px;
+    display: flex;
+    flex-direction: column;
+  }
+  .slide.dark { background: var(--dark); color: #ffffff; }
+
+  /* ---- 상단 라인 (Eyebrow & Page Counter) ---- */
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-shrink: 0;
+    margin-bottom: 60px;
+  }
+  .eyebrow {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .dark .eyebrow { color: var(--dark-muted); }
+  .counter {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--faint);
+  }
+
+  /* ---- 타이틀 / 헤드 블록 ---- */
+  .head-block { flex-shrink: 0; margin-bottom: 40px; }
+  .headline {
+    font-size: 64px;
+    font-weight: 800;
+    color: var(--ink);
+    line-height: 1.2;
+    margin: 0;
+    word-break: keep-all;
+  }
+  .dark .headline { color: #ffffff; }
+  .sub {
+    font-size: 24px;
+    color: var(--muted);
+    margin-top: 24px;
+    line-height: 1.5;
+    max-width: 1400px;
+  }
+  .dark .sub { color: var(--dark-muted); }
+
+  /* ---- 메인 콘텐츠 영역 ---- */
+  .body-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    min-height: 0;
+  }
+
+  /* ---- 하단 푸터 라인 ---- */
+  .footer-row {
+    margin-top: auto;
+    padding-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-shrink: 0;
+  }
+  .footer-label { font-size: 24px; font-weight: 800; color: var(--ink); }
+  .dark .footer-label { color: #ffffff; }
+  .footer-meta { font-size: 20px; color: var(--faint); }
+
+  /* ---- 1번 스타일: 표지 / 간지 템플릿 ---- */
+  .cover { justify-content: flex-start; }
+  .cover-body { margin-top: 160px; display: flex; flex-direction: column; gap: 35px; }
+  .cover-title { font-size: 96px; font-weight: 800; line-height: 1.1; color: var(--ink); margin: 0; letter-spacing: -0.05em; }
+  .dark .cover-title { color: #ffffff; }
+  .cover-sub { font-size: 38px; font-weight: 700; color: var(--ink); line-height: 1.3; margin-top: 5px; }
+  .dark .cover-sub { color: #ffffff; }
+  
+  /* 태그 디자인: 완전 직각, 균일 폰트 크기 */
+  .tag-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .tag {
+    padding: 12px 24px;
+    font-size: 20px;
+    font-weight: 700;
+    background: var(--row);
+    color: var(--ink);
+    border: none;
+  }
+  .tag.on { background: var(--ink); color: #ffffff; }
+  .dark .tag { background: var(--dark-card); color: #ffffff; }
+  .dark .tag.on { background: #ffffff; color: var(--dark); }
+
+  /* ---- 2번 스타일: 넘버링 리스트 템플릿 ---- */
+  .num-list { display: flex; flex-direction: column; gap: 30px; margin-top: 20px; }
+  .num-item { display: flex; gap: 30px; align-items: flex-start; }
+  .num-circle {
+    width: 48px;
+    height: 48px;
+    background: var(--ink);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .num-text-box { display: flex; flex-direction: column; gap: 6px; }
+  .num-title { font-size: 28px; font-weight: 800; color: var(--ink); margin: 0; }
+  .num-desc { font-size: 22px; color: var(--muted); line-height: 1.4; margin: 0; }
+
+  /* ---- 3번 스타일: 균일한 그리드/테이블 박스 템플릿 ---- */
+  .table-rows { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+  .table-row {
+    display: flex;
+    align-items: flex-start;
+    background: var(--row);
+    padding: 30px 40px;
+    gap: 40px;
+  }
+  .table-label {
+    width: 260px;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--ink);
+    flex-shrink: 0;
+  }
+  .table-desc {
+    font-size: 22px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* 통계 및 일반 카드 레이아웃 */
+  .stat-grid { display: flex; gap: 20px; width: 100%; }
+  .stat-card {
+    flex: 1;
+    background: var(--row);
+    padding: 40px 35px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    justify-content: space-between;
+  }
+  .dark .stat-card { background: var(--dark-card); }
+  .stat-num { font-size: 56px; font-weight: 800; color: var(--ink); line-height: 1; }
+  .dark .stat-num { color: #ffffff; }
+  .stat-label { font-size: 20px; color: var(--muted); line-height: 1.4; margin: 0; font-weight: 500; }
+  .dark .stat-label { color: var(--dark-muted); }
+
+  /* ---- 4번 스타일: 2컬럼 다크 카드 그리드 템플릿 ---- */
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+  .card {
+    background: var(--row);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .dark .card { background: var(--dark-card); }
+  .card-title { font-size: 28px; font-weight: 800; color: var(--ink); margin: 0; }
+  .dark .card-title { color: #ffffff; }
+  .card-desc { font-size: 20px; color: var(--muted); line-height: 1.5; margin: 0; }
+  .dark .card-desc { color: var(--dark-muted); }
+
+  /* ---- 수평 바 차트 아이템 ---- */
+  .bar-rows { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+  .bar-row { display: flex; align-items: center; gap: 25px; }
+  .bar-label { width: 280px; flex-shrink: 0; font-size: 22px; font-weight: 700; color: var(--ink); }
+  .dark .bar-label { color: #ffffff; }
+  .bar-track { flex: 1; height: 36px; background: #e0e0e0; position: relative; }
+  .dark .bar-track { background: #333333; }
+  .bar-fill { height: 100%; background: var(--ink); }
+  .dark .bar-fill { background: #ffffff; }
+  .bar-fill.faint { background: #888888; }
+  .bar-value { width: 100px; text-align: right; font-size: 22px; font-weight: 800; color: var(--ink); }
+  .dark .bar-value { color: #ffffff; }
+
+  /* ---- 콜아웃 (텍스트 박스 형태) ---- */
+  .callout {
+    background: var(--row);
+    padding: 30px 40px;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.5;
+    border: none;
+  }
+  .dark .callout { background: var(--dark-card); color: #ffffff; }
+
+  /* ---- 플로우 프로세스 맵 템플릿 ---- */
+  .flow-rows { display: flex; align-items: stretch; width: 100%; gap: 0; }
+  .flow-step {
+    flex: 1;
+    background: var(--row);
+    padding: 25px 20px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    border-right: 1px solid #e0e0e0;
+  }
+  .flow-step:last-child { border-right: none; }
+  .flow-step-title { font-size: 22px; font-weight: 800; color: var(--ink); }
+  .flow-step-desc { font-size: 18px; color: var(--muted); line-height: 1.4; }
+  .flow-arrow {
+    display: none; /* 레퍼런스 스타일 디자인을 위해 텍스트 화살표 분리 블록 숨김 처리 및 구조화 */
+  }
+
+  /* ---- 래퍼 및 특수 레이아웃 요소 ---- */
+  .two-col { display: flex; gap: 40px; width: 100%; }
+  .col-half { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+  
+  .icon-flow { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px 0; }
+  .icon-col { display: flex; flex-direction: column; align-items: center; gap: 15px; flex: 1; }
+  .icon-circle { font-size: 64px; }
+  .icon-label { font-size: 24px; font-weight: 800; color: var(--ink); }
+  .icon-arrow { font-size: 36px; color: var(--faint); font-weight: 300; }
+
+  .imgph {
+    background: var(--row);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 20px;
+    text-align: center;
+    padding: 40px;
+    line-height: 1.5;
+    font-weight: 500;
+    border: 1px dashed var(--faint);
+  }
+  .dark .imgph { background: var(--dark-card); color: var(--dark-muted); }
+
+  @media print {
+    @page { size: 1920px 1080px; margin: 0; }
+    body { background: transparent; padding: 0; display: block; }
+    .deck { gap: 0; display: block; }
+    .slide { box-shadow: none; page-break-after: always; page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- 01 표지 -->
+<section class="slide cover" data-label="01 표지">
+  <div class="top-row">
+    <span class="eyebrow">ULTRA CAPSHYONG ITEM WITH 4 VALUES · 프로젝트 1-3팀</span>
+    <span class="counter">01 / 30</span>
+  </div>
+  <div class="cover-body">
+    <h1 class="cover-title">카탈로그 특화에서<br/>일반화까지</h1>
+    <span class="cover-sub">알약 객체탐지 AI 프로젝트 — 통합 보고</span>
+    <div class="tag-row">
+      <span class="tag on">이태민</span>
+      <span class="tag on">홍우석</span>
+      <span class="tag on">이형기</span>
+      <span class="tag on">장한빈</span>
+      <span class="tag on">최중열</span>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Pill Detection AI</span>
+    <span class="footer-meta">Object Detection / Domain Generalization / Team Report</span>
+  </div>
+</section>
+
+<!-- P1 개요&시작 -->
+<section class="slide cover" data-label="P1 개요&시작">
+  <div class="top-row">
+    <span class="eyebrow">PART 1 / 6</span>
+    <span class="counter">02 / 30</span>
+  </div>
+  <div class="cover-body">
+    <h1 class="cover-title">개요 &amp; 시작</h1>
+    <div class="tag-row">
+      <span class="tag on">발표: 본인</span>
+      <span class="tag">4장</span>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Part 1</span>
+    <span class="footer-meta">문제 정의 · 초기 데이터 진단 · 모델 벤치마킹</span>
+  </div>
+</section>
+
+<!-- 02 문제정의&목표 -->
+<section class="slide" data-label="02 문제정의&목표">
+  <div class="top-row">
+    <span class="eyebrow">PART 1 · 개요 &amp; 시작</span>
+    <span class="counter">03 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">복용 중인 알약, 사진 한 장으로 인식할 수 있을까</h1>
+  </div>
+  <div class="body-area">
+    <div class="icon-flow">
+      <div class="icon-col">
+        <div class="icon-circle">📷</div>
+        <span class="icon-label">모바일 촬영</span>
+      </div>
+      <span class="icon-arrow">→</span>
+      <div class="icon-col">
+        <div class="icon-circle">🔍</div>
+        <span class="icon-label">알약 위치 검출</span>
+      </div>
+      <span class="icon-arrow">→</span>
+      <div class="icon-col">
+        <div class="icon-circle">💊</div>
+        <span class="icon-label">종류 자동 인식</span>
+      </div>
+    </div>
+    <p class="sub">고령자·만성질환자는 복용하는 약의 종류가 많아 구분이 어렵습니다. 이미지 1장당 최대 4개 알약을 검출하고 종류를 예측하는 것이 핵심 과제입니다.</p>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-label">1단계 목표 mAP</span>
+        <span class="stat-num">0.90+ <span style="font-size:32px; color:var(--muted); font-weight:700;">→ 달성 0.984</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Goal</span>
+    <span class="footer-meta">PART 1 · 개요 &amp; 시작</span>
+  </div>
+</section>
+
+<!-- 03 초기데이터진단 -->
+<section class="slide" data-label="03 초기데이터진단">
+  <div class="top-row">
+    <span class="eyebrow">PART 1 · 개요 &amp; 시작</span>
+    <span class="counter">04 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">Train은 적고, Test는 많고, 클래스는 불균형했다</h1>
+  </div>
+  <div class="body-area">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-num">232장</span>
+        <span class="stat-label">Train 이미지<br/>763개 알약 · 56클래스</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">842장</span>
+        <span class="stat-label">Test 이미지<br/>Train의 3.6배</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">153개</span>
+        <span class="stat-label">최대 클래스<br/>샘플 수</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">3개</span>
+        <span class="stat-label">최소 클래스 샘플<br/>편차 50배 이상</span>
+      </div>
+    </div>
+    <div class="callout">"기획 단계에서 이미 저데이터 상황을 인지, 전이학습·증강·외부데이터 활용을 필수로 판단"</div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Data</span>
+    <span class="footer-meta">PART 1 · 개요 &amp; 시작</span>
+  </div>
+</section>
+
+<!-- 04 초기모델벤치마킹 -->
+<section class="slide" data-label="04 초기모델벤치마킹">
+  <div class="top-row">
+    <span class="eyebrow">PART 1 · 개요 &amp; 시작</span>
+    <span class="counter">05 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">동일 조건, 6개 아키텍처 정량 비교</h1>
+    <p class="sub">동일 fold · 하니스, tiny subset ~100장, 20epoch</p>
+  </div>
+  <div class="body-area">
+    <div class="two-col">
+      <div class="col-half" style="flex: 1.3;">
+        <div class="bar-rows">
+          <div class="bar-row"><span class="bar-label">RT-DETR-l</span><div class="bar-track"><div class="bar-fill" style="width:95%;"></div></div><span class="bar-value">0.737</span></div>
+          <div class="bar-row"><span class="bar-label">YOLO11n</span><div class="bar-track"><div class="bar-fill faint" style="width:88.4%;"></div></div><span class="bar-value">0.686</span></div>
+          <div class="bar-row"><span class="bar-label">Faster R-CNN</span><div class="bar-track"><div class="bar-fill faint" style="width:84.4%;"></div></div><span class="bar-value">0.655</span></div>
+          <div class="bar-row"><span class="bar-label">RetinaNet-R50</span><div class="bar-track"><div class="bar-fill faint" style="width:74.8%;"></div></div><span class="bar-value">0.58</span></div>
+          <div class="bar-row"><span class="bar-label">YOLO2xn</span><div class="bar-track"><div class="bar-fill faint" style="width:61.9%;"></div></div><span class="bar-value">0.48</span></div>
+          <div class="bar-row"><span class="bar-label">FCOS-R50</span><div class="bar-track"><div class="bar-fill faint" style="width:24%;"></div></div><span class="bar-value">0.186</span></div>
+        </div>
+      </div>
+      <div class="col-half">
+        <div class="stat-card">
+          <span class="stat-num">0.737</span>
+          <span class="stat-label">RT-DETR-l 최고 성능<br/>YOLO11n 대비 +0.051</span>
+        </div>
+        <div class="callout">Faster R-CNN MPS 환경 mAP 0.0 → <strong>"버그"가 아닌 "학습 발산"</strong>으로 진단, warmup 적용 후 정상 복구</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Benchmark</span>
+    <span class="footer-meta">PART 1 · 개요 &amp; 시작</span>
+  </div>
+</section>
+
+<!-- P2 합성데이터&그림자 -->
+<section class="slide cover" data-label="P2 합성데이터&그림자">
+  <div class="top-row">
+    <span class="eyebrow">PART 2 / 6</span>
+    <span class="counter">06 / 30</span>
+  </div>
+  <div class="cover-body">
+    <h1 class="cover-title">합성데이터 &amp; 그림자 합성</h1>
+    <div class="tag-row">
+      <span class="tag on">발표: 팀원A</span>
+      <span class="tag">4장</span>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Part 2</span>
+    <span class="footer-meta">증강 전략 · SAM 합성 파이프라인 · 효과 검증</span>
+  </div>
+</section>
+
+<!-- 05 증강합성전략 -->
+<section class="slide" data-label="05 증강합성전략">
+  <div class="top-row">
+    <span class="eyebrow">PART 2 · 합성데이터 &amp; 그림자 합성</span>
+    <span class="counter">07 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">부족한 데이터를 어떻게 채울 것인가</h1>
+  </div>
+  <div class="body-area">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="num-circle">1</div>
+        <span class="num-title">Copy-Paste 증강</span>
+        <span class="num-desc">알약 크롭 뱅크 + 배경 풀, 1~4개 랜덤 배치 합성</span>
+        <span class="footer-meta" style="margin-top:20px;">가장 단순한 기하학적 증강</span>
+      </div>
+      <div class="stat-card">
+        <div class="num-circle">2</div>
+        <span class="num-title">SAM 조명·그림자 합성</span>
+        <span class="num-desc">전경 분리 후 색온도·광원 방향 역산 렌더링</span>
+        <span class="footer-meta" style="margin-top:20px;">다음 슬라이드에서 상세 소개</span>
+      </div>
+      <div class="stat-card">
+        <div class="num-circle">3</div>
+        <span class="num-title">AI Hub 데이터 통합</span>
+        <span class="num-desc">조합 1,3,4,5,6 활용, K-code 기반 클래스 재변환</span>
+        <span class="footer-meta" style="margin-top:20px;">외부 데이터 최대 활용</span>
+      </div>
+      <div class="stat-card">
+        <div class="num-circle">4</div>
+        <span class="num-title">Diffusion/GAN 검토</span>
+        <span class="num-desc">검토 후 노이즈 분포 대체 불가로 배제</span>
+        <span class="footer-meta" style="margin-top:20px;">채택하지 않은 대안</span>
+      </div>
+    </div>
+    <div class="callout">4가지 전략 중 <strong>①·②·③을 조합</strong>해 저데이터 문제를 정면 돌파했고, 다음 두 슬라이드는 ②의 파이프라인과 효과 검증을 다룹니다.</div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Strategy</span>
+    <span class="footer-meta">PART 2 · 합성데이터 &amp; 그림자 합성</span>
+  </div>
+</section>
+
+<!-- 06 SAM조명그림자파이프라인 -->
+<section class="slide" data-label="06 SAM조명그림자파이프라인">
+  <div class="top-row">
+    <span class="eyebrow">PART 2 · 합성데이터 &amp; 그림자 합성</span>
+    <span class="counter">08 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">실제 촬영처럼 보이게 만드는 4단계</h1>
+  </div>
+  <div class="body-area">
+    <div class="flow-rows">
+      <div class="flow-step"><span class="flow-step-title">① 전경 분리</span><span class="flow-step-desc">SAM으로 알약 누끼 분리</span></div>
+      <div class="flow-step"><span class="flow-step-title">② 배경 준비</span><span class="flow-step-desc">합성 대상 배경 별도 확보</span></div>
+      <div class="flow-step"><span class="flow-step-title">③ 조명 합성</span><span class="flow-step-desc">배경 색상·밝기 샘플링, 스크린 블렌드</span></div>
+      <div class="flow-step"><span class="flow-step-title">④ 그림자 합성</span><span class="flow-step-desc">밝기 비대칭 ΔL로 광원 방향 역산 렌더링</span></div>
+    </div>
+    
+    <div class="two-col" style="flex: 1;">
+      <div class="col-half">
+        <span class="footer-label" style="font-size:20px; color:var(--muted);">BEFORE · Copy-Paste 증강 (그림자 미반영)</span>
+        <div class="imgph" style="flex:1;">Copy-Paste 합성 예시<br/>(그림자 미반영, 원본 자료 첨부 예정)</div>
+      </div>
+      <div class="col-half">
+        <span class="footer-label" style="font-size:20px;">AFTER · SAM 조명·그림자 합성 적용</span>
+        <div class="imgph" style="flex:1; border:2px solid var(--ink);">SAM 조명·그림자 합성 적용 예시<br/>(원본 자료 첨부 예정)</div>
+      </div>
+      <div class="col-half">
+        <span class="footer-label" style="font-size:20px;">그림자 방향 역산 원리</span>
+        <div class="imgph" style="flex:1;">추정 광원 방향 → 밝기 차(ΔL) 산출 → 반대쪽에 그림자 렌더링</div>
+      </div>
+    </div>
+    
+    <div class="callout">합성 이미지는 실제보다 노이즈가 적어, 모델이 알약이 아닌 <strong>경계(edge) 픽셀 패턴</strong>을 학습하는 부작용 확인 → 합성이 실제 노이즈 분포를 대체할 수 없다</div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Pipeline</span>
+    <span class="footer-meta">PART 2 · 합성데이터 &amp; 그림자 합성</span>
+  </div>
+</section>
+
+<!-- 07 증강효과검증 -->
+<section class="slide" data-label="07 증강효과검증">
+  <div class="top-row">
+    <span class="eyebrow">PART 2 · 합성데이터 &amp; 그림자 합성</span>
+    <span class="counter">09 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">원본 대비 증강·합성, 실제로 도움이 됐을까</h1>
+  </div>
+  <div class="body-area">
+    <div class="two-col">
+      <div class="col-half" style="flex: 1.4; justify-content: center;">
+        <div class="bar-rows">
+          <div class="bar-row"><span class="bar-label">Kaggle 단독 (exp010)</span><div class="bar-track"><div class="bar-fill faint" style="width:80.7%;"></div></div><span class="bar-value">0.842</span></div>
+          <div class="bar-row"><span class="bar-label">+AI Hub 증강 (exp011)</span><div class="bar-track"><div class="bar-fill" style="width:95%;"></div></div><span class="bar-value">0.991</span></div>
+          <div class="bar-row"><span class="bar-label">정제 원본 5,450장 단독</span><div class="bar-track"><div class="bar-fill" style="width:95%;"></div></div><span class="bar-value">0.9908</span></div>
+        </div>
+        <span class="footer-meta" style="margin-top:20px;">합성 1,800장 과다 포함 시 domain gap — 내부 val 0.944 → 실데이터 val 0.211</span>
+      </div>
+      
+      <div class="col-half">
+        <div class="callout"><strong>⚠ 클래스 불균형 보완용 합성 데이터 추가 투입</strong><br/><br/>→ 오히려 Kaggle 점수 하락. 원본에 이미 맞춰진 상태에서 합성 추가 시 <strong>Overfitting</strong></div>
+        <div class="col-half" style="gap:10px;">
+          <span class="footer-label" style="font-size:20px;">Copy-Paste 합성 데이터 예시</span>
+          <div class="imgph" style="flex:1;">Copy-Paste 합성 데이터 그리드 예시<br/>(원본 자료 첨부 예정)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Validation</span>
+    <span class="footer-meta">PART 2 · 합성데이터 &amp; 그림자 합성</span>
+  </div>
+</section>
+
+<!-- 08 소결론1 (Dark Slide) -->
+<section class="slide dark" data-label="08 소결론1">
+  <div class="top-row">
+    <span class="eyebrow">PART 2 소결론</span>
+    <span class="counter">10 / 30</span>
+  </div>
+  <div style="flex:1; display:flex; align-items:center; gap:80px;">
+    <h2 style="font-size:64px; font-weight:800; line-height:1.3; color:#fff; margin:0; flex:1.2;">"결국 성능을 가장<br/>크게 끌어올린 건<br/>원본 데이터의<br/>양과 품질이었다"</h2>
+    <div style="flex:1; display:flex; flex-direction:column; gap:20px;">
+      <div class="card"><span class="card-title">원본은 대체 불가</span></div>
+      <div class="card"><span class="card-title">클래스 균형은 추출이 아닌 생성 단계에서</span></div>
+      <div class="card"><span class="card-title">이미 원본이 많은 클래스는 합성 불필요</span></div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Insight</span>
+    <span class="footer-meta">PART 2 · 합성데이터 &amp; 그림자 합성</span>
+  </div>
+</section>
+
+<!-- P3 누수체크&불균형 -->
+<section class="slide cover" data-label="P3 누수체크&불균형">
+  <div class="top-row">
+    <span class="eyebrow">PART 3 / 6</span>
+    <span class="counter">11 / 30</span>
+  </div>
+  <div class="cover-body">
+    <h1 class="cover-title">누수 체크 &amp; 클래스 불균형 해소</h1>
+    <div class="tag-row">
+      <span class="tag on">발표: 팀원B</span>
+      <span class="tag">6장</span>
+    </div>
+  </div>
+  <div class="cover-footer">
+    <span class="footer-label">Part 3</span>
+    <span class="footer-meta">커버리지 재정의 · 데이터 누수 탐지 · 자동 라벨 정리</span>
+  </div>
+</section>
+
+<!-- 09 문제재정의커버리지 -->
+<section class="slide" data-label="09 문제재정의커버리지">
+  <div class="top-row">
+    <span class="eyebrow">PART 3 · 누수 체크 &amp; 클래스 불균형 해소</span>
+    <span class="counter">12 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">병목은 모델이 아니라 '커버리지'였다</h1>
+  </div>
+  <div class="body-area">
+    <div class="bar-rows">
+      <div class="bar-row"><span class="bar-label">56cls synth</span><div class="bar-track"><div class="bar-fill faint" style="width:67.4%;"></div></div><span class="bar-value">0.7095</span></div>
+      <div class="bar-row"><span class="bar-label">56cls clean</span><div class="bar-track"><div class="bar-fill faint" style="width:70.6%;"></div></div><span class="bar-value">0.7427</span></div>
+      <div class="bar-row"><span class="bar-label">118cls dirty</span><div class="bar-track"><div class="bar-fill" style="width:93.7%;"></div></div><span class="bar-value">0.9859</span></div>
+      <div class="bar-row"><span class="bar-label">118cls clean(11s)</span><div class="bar-track"><div class="bar-fill" style="width:94.3%;"></div></div><span class="bar-value">0.9921</span></div>
+      <div class="bar-row"><span class="bar-label">118cls clean(11m)</span><div class="bar-track"><div class="bar-fill" style="width:94.9%;"></div></div><span class="bar-value">0.9988</span></div>
+      <div class="bar-row"><span class="bar-label">RT-DETR solo</span><div class="bar-track"><div class="bar-fill" style="width:94.4%;"></div></div><span class="bar-value">0.9935</span></div>
+      <div class="bar-row"><span class="bar-label">WBF 앙상블</span><div class="bar-track"><div class="bar-fill" style="width:95%;"></div></div><span class="bar-value">0.9994</span></div>
+    </div>
+    <p class="sub">같은 test 842장, GT 71~79클래스로 확장된 대회 이전 시 기존 56클래스로는 점수 급락 → AI Hub 116개 클래스 전량 추출(10,489장)해 118클래스로 확장, mAP 0.74 → 0.99</p>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Reframe</span>
+    <span class="footer-meta">PART 3 · 누수 체크 &amp; 클래스 불균형 해소</span>
+  </div>
+</section>
+
+<!-- 10 Train데이터보강 -->
+<section class="slide" data-label="10 Train데이터보강">
+  <div class="top-row">
+    <span class="eyebrow">PART 3 · 누수 체크 &amp; 클래스 불균형 해소</span>
+    <span class="counter">13 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">'안 지우고 다 살린다'는 관점 전환</h1>
+  </div>
+  <div class="body-area">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-num">118종</span>
+        <span class="stat-label">확장 클래스<br/>(기존 56종)</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">10,489장</span>
+        <span class="stat-label">AI Hub 116클래스<br/>전량 추출</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">5,800장</span>
+        <span class="stat-label">경구약제 데이터<br/>추가 확보</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">5,450장</span>
+        <span class="stat-label">수작업 검토 후<br/>최종 채택, 350장 제외</span>
+      </div>
+    </div>
+    <div class="callout">한동안 mAP 0.93이 한계라 판단했지만 좁은 데이터 슬라이스만의 오판 — 실제로는 <strong>0.98~0.99대까지 도달 가능</strong></div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Data</span>
+    <span class="footer-meta">PART 3 · 누수 체크 &amp; 클래스 불균형 해소</span>
+  </div>
+</section>
+
+<!-- 11 데이터누수탐지 -->
+<section class="slide" data-label="11 데이터누수탐지">
+  <div class="top-row">
+    <span class="eyebrow">PART 3 · 누수 체크 &amp; 클래스 불균형 해소</span>
+    <span class="counter">14 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">성능이 갑자기 좋아 보이면, 먼저 의심한다</h1>
+  </div>
+  <div class="body-area">
+    <div class="two-col">
+      <div class="col-half" style="flex: 1.3;">
+        <div class="table-rows">
+          <div class="table-row" style="flex-direction: column; gap: 8px;">
+            <span class="table-label">근접중복 누수</span>
+            <span class="table-desc">AI Hub 조합1~6 중 조합2(테스트셋)와 근접중복 이미지 발견 → 자체 유사도 분석 파이프라인으로 탐지·제거</span>
+          </div>
+          <div class="table-row" style="flex-direction: column; gap: 8px;">
+            <span class="table-label">Real-copy 누수</span>
+            <span class="table-desc">mAP 0.945 이례적 고득점을 의심, source_file 매핑 역추적 → fold1·2 사이 real-copy 누수 확정, clean 데이터로 재실험</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-half" style="justify-content: center;">
+        <span class="footer-meta">fold별 mAP (비단조 증가)</span>
+        <div class="bar-rows">
+          <div class="bar-row"><span class="bar-label" style="width:120px;">YOLO11n</span><div class="bar-track"><div class="bar-fill faint" style="width:92.5%;"></div></div><span class="bar-value">0.905</span></div>
+          <div class="bar-row"><span class="bar-label" style="width:120px;">YOLO11s</span><div class="bar-track"><div class="bar-fill" style="width:95%;"></div></div><span class="bar-value">0.930</span></div>
+          <div class="bar-row"><span class="bar-label" style="width:120px;">YOLO11m</span><div class="bar-track"><div class="bar-fill faint" style="width:92.7%;"></div></div><span class="bar-value">0.907</span></div>
+        </div>
+        <span class="footer-label" style="font-size:22px; margin-top:10px;">11s 스윗스팟이 역추적 단서가 됨</span>
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Audit</span>
+    <span class="footer-meta">PART 3 · 누수 체크 &amp; 클래스 불균형 해소</span>
+  </div>
+</section>
+
+<!-- 12 라벨자동정리파이프라인 -->
+<section class="slide" data-label="12 라벨자동정리파이프라인">
+  <div class="top-row">
+    <span class="eyebrow">PART 3 · 누수 체크 &amp; 클래스 불균형 해소</span>
+    <span class="counter">15 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">모델 불일치 + 기하 휴리스틱, 2트랙 신호로 랭킹</h1>
+  </div>
+  <div class="body-area">
+    <div class="flow-rows">
+      <div class="flow-step"><span class="flow-step-title">① 대상 선정</span></div>
+      <div class="flow-step"><span class="flow-step-title">② 강한 모델 예측</span></div>
+      <div class="flow-step"><span class="flow-step-title">③ GT↔예측 매칭</span></div>
+      <div class="flow-step"><span class="flow-step-title">④ 2트랙 플래그</span></div>
+      <div class="flow-step"><span class="flow-step-title">⑤ 가중합·랭킹</span></div>
+      <div class="flow-step"><span class="flow-step-title">⑥ 출력</span></div>
+    </div>
+    <p class="sub" style="margin-top:0;">사람은 상위 랭킹만 수분 검수 — 완전 자동화된 의심 라벨 추출</p>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-num">246장 (3%)</span>
+        <span class="stat-label">자동 검출된 의심 라벨 · 팀원 수작업 ~300장과 동급 규모</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">+0.0027</span>
+        <span class="stat-label">fold0 개선 · 제거실험 0.9833 → 0.9860</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">개입 0</span>
+        <span class="stat-label">사람 개입 없는 완전 자동 랭킹</span>
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Pipeline</span>
+    <span class="footer-meta">PART 3 · 누수 체크 &amp; 클래스 불균형 해소</span>
+  </div>
+</section>
+
+<!-- 13 의심라벨검출사례 -->
+<section class="slide" data-label="13 의심라벨검출사례">
+  <div class="top-row">
+    <span class="eyebrow">PART 3 · 누수 체크 &amp; 클래스 불균형 해소</span>
+    <span class="counter">16 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">실제 AI Hub 원본 이미지에서 자동으로 걸러낸 오류</h1>
+  </div>
+  <div class="body-area">
+    <div class="two-col" style="flex: 1;">
+      <div class="col-half" style="flex: 1.6;">
+        <span class="footer-label" style="font-size:20px;">자동 랭킹 상위 — 의심 라벨 검출 결과 (박스 = 플래그된 라벨)</span>
+        <div class="imgph" style="flex:1;">자동 랭킹 상위 의심 라벨 검출 사례<br/>(원본 자료 첨부 예정)</div>
+      </div>
+      <div class="col-half">
+        <span class="footer-label" style="font-size:20px;">SAM2 컷아웃 감사 — 누끼·박스 정합 검증</span>
+        <div class="imgph" style="flex:1; border:2px solid var(--ink);">SAM2 컷아웃 감사 그리드<br/>(원본 자료 첨부 예정)</div>
+      </div>
+    </div>
+    <span class="footer-meta">AI Hub 원본 라벨, 인페인트 처리 전 상태 — 246/8,068장(3.0%)이 의심 랭킹 상위로 자동 분류됨. 사람은 상위 랭킹만 수분 검수합니다.</span>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Case</span>
+    <span class="footer-meta">PART 3 · 누수 체크 &amp; 클래스 불균형 해소</span>
+  </div>
+</section>
+
+<!-- 14 클래스불균형재조정 -->
+<section class="slide" data-label="14 클래스불균형재조정">
+  <div class="top-row">
+    <span class="eyebrow">PART 3 · 누수 체크 &amp; 클래스 불균형 해소</span>
+    <span class="counter">17 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">규모를 키워도 편차는 남아 있었다</h1>
+  </div>
+  <div class="body-area">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-num">118개</span>
+        <span class="stat-label">클래스 수</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">8,700+</span>
+        <span class="stat-label">정제·확장 이미지 수</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num" style="font-size:48px;">SYNTH</span>
+        <span class="stat-label">희소 클래스 중심<br/>합성 보강 시도</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num" style="font-size:48px;">제한적</span>
+        <span class="stat-label">재조정 후에도<br/>개선 폭은 크지 않음</span>
+      </div>
+    </div>
+    <div class="callout">118클래스 · 8,700장 규모로 커져도 편차는 여전, 희소 클래스 합성 보정 개선 폭 제한적 — <strong>카탈로그 내부 지표만으로는 한계</strong>가 있다는 신호</div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Insight</span>
+    <span class="footer-meta">PART 3 · 누수 체크 &amp; 클래스 불균형 해소</span>
+  </div>
+</section>
+
+<!-- P4 YOLO11vsRTDETR -->
+<section class="slide cover" data-label="P4 YOLO11vsRTDETR">
+  <div class="top-row">
+    <span class="eyebrow">PART 4 / 6</span>
+    <span class="counter">18 / 30</span>
+  </div>
+  <div class="cover-body">
+    <h1 class="cover-title">YOLO11 vs RT-DETR 발전</h1>
+    <div class="tag-row">
+      <span class="tag on">발표: 팀원C</span>
+      <span class="tag">4장</span>
+    </div>
+  </div>
+  <div class="cover-footer">
+    <span class="footer-label">Part 4</span>
+    <span class="footer-meta">정밀 비교 · 고도화 과정 · 최종 모델 선정</span>
+  </div>
+</section>
+
+<!-- 15 정밀비교 -->
+<section class="slide" data-label="15 정밀비교">
+  <div class="top-row">
+    <span class="eyebrow">PART 4 · YOLO11 vs RT-DETR 발전</span>
+    <span class="counter">19 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">내부 검증과 실제 제출 점수가 갈렸다</h1>
+  </div>
+  <div class="body-area">
+    <div class="two-col">
+      <div class="col-half" style="flex: 1.3; gap: 30px;">
+        <div class="bar-rows">
+          <span class="footer-meta">내부 val mAP50-95</span>
+          <div class="bar-row"><span class="bar-label" style="width:130px;">YOLO11s</span><div class="bar-track"><div class="bar-fill" style="width:94.2%;"></div></div><span class="bar-value">0.986</span></div>
+          <div class="bar-row"><span class="bar-label" style="width:130px;">RT-DETR L</span><div class="bar-track"><div class="bar-fill faint" style="width:88.9%;"></div></div><span class="bar-value">0.930</span></div>
+        </div>
+        <div class="bar-rows">
+          <span class="footer-meta">Kaggle Score</span>
+          <div class="bar-row"><span class="bar-label" style="width:130px;">YOLO11s</span><div class="bar-track"><div class="bar-fill faint" style="width:94.3%;"></div></div><span class="bar-value">0.987</span></div>
+          <div class="bar-row"><span class="bar-label" style="width:130px;">RT-DETR L</span><div class="bar-track"><div class="bar-fill" style="width:95%;"></div></div><span class="bar-value">0.994</span></div>
+        </div>
+      </div>
+      
+      <div class="col-half">
+        <div class="stat-card">
+          <span class="stat-num">99.17%</span>
+          <span class="stat-label">두 모델 박스 IoU 0.5+ 매칭률<br/>위치는 거의 동일하게 검출</span>
+        </div>
+        <p class="sub" style="margin-top:0;">대규모 클래스 불일치·박스 붕괴 없음 → YOLO11s 과적합 증거 없음, 점수 차이는 recall 우위(RT-DETR L이 376개 추가 검출)에 가까움</p>
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Compare</span>
+    <span class="footer-meta">PART 4 · YOLO11 vs RT-DETR 발전</span>
+  </div>
+</section>
+
+<!-- 16 RTDETR고도화추이 -->
+<section class="slide" data-label="16 RTDETR고도화추이">
+  <div class="top-row">
+    <span class="eyebrow">PART 4 · YOLO11 vs RT-DETR 발전</span>
+    <span class="counter">20 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">버그투성이 0.0에서 0.983까지</h1>
+  </div>
+  <div class="body-area">
+    <div class="two-col" style="align-items: center;">
+      <div class="col-half" style="flex: 2;">
+        <svg viewBox="0 0 1000 320" style="width:100%; height:360px; overflow:visible;">
+          <line x1="0" y1="300" x2="1000" y2="300" stroke="#000" stroke-width="2"/>
+          <polyline points="0,300 250,34 500,29 750,25 1000,24" fill="none" stroke="#000000" stroke-width="6"/>
+          <circle cx="0" cy="300" r="8" fill="#000"/>
+          <circle cx="250" cy="34" r="8" fill="#000"/>
+          <circle cx="500" cy="29" r="8" fill="#000"/>
+          <circle cx="750" cy="25" r="8" fill="#000"/>
+          <circle cx="1000" cy="24" r="8" fill="#000"/>
+          <text x="0" y="340" font-size="22" fill="#000" font-weight="700">0.0</text>
+          <text x="240" y="70" font-size="22" fill="#000" font-weight="700">0.95</text>
+          <text x="490" y="65" font-size="22" fill="#000" font-weight="700">0.968</text>
+          <text x="740" y="60" font-size="22" fill="#000" font-weight="700">0.982</text>
+          <text x="960" y="60" font-size="22" fill="#000" font-weight="700">0.983</text>
+        </svg>
+        <div style="display:flex; justify-content:space-between; width:100%; margin-top:20px;">
+          <span style="width:180px; font-size:18px; color:var(--muted); text-align:center; font-weight:700;">초기 (버그)</span>
+          <span style="width:180px; font-size:18px; color:var(--muted); text-align:center; font-weight:700;">Backbone Freeze<br/>+Copy-Paste+5Fold</span>
+          <span style="width:180px; font-size:18px; color:var(--muted); text-align:center; font-weight:700;">num_queries 100<br/>+Plateau</span>
+          <span style="width:180px; font-size:18px; color:var(--muted); text-align:center; font-weight:700;">Gradient<br/>Clipping</span>
+          <span style="width:180px; font-size:18px; color:var(--muted); text-align:center; font-weight:700;">고급증강<br/>+80epoch</span>
+        </div>
+      </div>
+      
+      <div class="col-half">
+        <div class="stat-card">
+          <span class="stat-num">0.0 → 0.983</span>
+          <span class="stat-label">5단계 고도화로 완전 발산 상태에서 안정적 고성능까지 회복</span>
+        </div>
+        <p class="sub" style="margin-top:0;">초기 버그(발산)를 backbone freeze와 warmup으로 잡고, query 수·gradient clipping·증강 강도를 단계적으로 조정해 RT-DETR을 실전 투입 가능한 수준까지 끌어올렸습니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Timeline</span>
+    <span class="footer-meta">PART 4 · YOLO11 vs RT-DETR 발전</span>
+  </div>
+</section>
+
+<!-- 17 YOLO11n고도화 -->
+<section class="slide" data-label="17 YOLO11n고도화">
+  <div class="top-row">
+    <span class="eyebrow">PART 4 · YOLO11 vs RT-DETR 발전</span>
+    <span class="counter">21 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">정확도의 한계를 확인하기 위한 실험</h1>
+  </div>
+  <div class="body-area">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-num">0.984</span>
+        <span class="stat-label">YOLO11n 최종 mAP75-95<br/>Precision 0.955 · Recall 0.953</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">0.9988</span>
+        <span class="stat-label">단일 모델 최고<br/>YOLO11m 118클래스 확장 후</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">0.9994</span>
+        <span class="stat-label">WBF 앙상블 성능 상한<br/>RT-DETR+YOLO11 결합</span>
+      </div>
+    </div>
+    <div class="callout">이 앙상블은 실제 서비스 모델이 아니라 상한선 검증용. 0.9994는 <strong>파이프라인의 정확도 한계가 이미 충분히 높다</strong>는 근거로 활용</div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Result</span>
+    <span class="footer-meta">PART 4 · YOLO11 vs RT-DETR 발전</span>
+  </div>
+</section>
+
+<!-- 18 최종모델선정 -->
+<section class="slide" data-label="18 최종모델선정">
+  <div class="top-row">
+    <span class="eyebrow">PART 4 · YOLO11 vs RT-DETR 발전</span>
+    <span class="counter">22 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">정확도가 아니라 '서비스 목적'이 기준</h1>
+  </div>
+  <div class="body-area">
+    <div class="two-col">
+      <div class="card" style="flex:1; border:2px solid var(--ink); background:#ffffff;">
+        <span class="tag on" style="align-self: flex-start;">최종 채택</span>
+        <span class="stat-num" style="font-size:44px; margin-top:10px;">YOLO11n</span>
+        <p class="num-desc">정확도 mAP75-95 <strong>0.984</strong></p>
+        <p class="num-desc">파라미터 2.6M (경량)</p>
+        <p class="num-desc">강점: 모바일 실시간 추론 속도</p>
+      </div>
+      <div class="card" style="flex:1;">
+        <span class="tag" style="align-self: flex-start;">정확도 상한선 검증용</span>
+        <span class="stat-num" style="font-size:44px; margin-top:10px;">RT-DETR / 앙상블</span>
+        <p class="num-desc">정확도 mAP <strong>0.983~0.9994</strong></p>
+        <p class="num-desc">파라미터 상대적으로 큼</p>
+        <p class="num-desc">역할: 고도화 방향 제시</p>
+      </div>
+    </div>
+    <div class="callout" style="background:var(--ink); color:#fff;">"정확도가 이미 서비스 요구 수준을 충족한 시점부터는 속도가 더 중요한 지표다"</div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Decision</span>
+    <span class="footer-meta">PART 4 · YOLO11 vs RT-DETR 발전</span>
+  </div>
+</section>
+
+<!-- P5 오토라벨링 -->
+<section class="slide cover" data-label="P5 오토라벨링">
+  <div class="top-row">
+    <span class="eyebrow">PART 5 / 6</span>
+    <span class="counter">23 / 30</span>
+  </div>
+  <div class="cover-body">
+    <h1 class="cover-title">오토라벨링</h1>
+    <div class="tag-row">
+      <span class="tag on">발표: 팀원D</span>
+      <span class="tag">4장</span>
+      <span class="tag">시간 여유 · Q&amp;A 유도</span>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Part 5</span>
+    <span class="footer-meta">실도메인 검증 · 오토라벨링 파이프라인 · 신뢰도 필터링</span>
+  </div>
+</section>
+
+<!-- 19 실도메인검증 -->
+<section class="slide" data-label="19 실도메인검증">
+  <div class="top-row">
+    <span class="eyebrow">PART 5 · 오토라벨링</span>
+    <span class="counter">24 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">카탈로그 성능과 실사용 성능은 다른 지표였다</h1>
+  </div>
+  <div class="body-area">
+    <div class="two-col">
+      <div class="col-half" style="flex: 1.3; justify-content: center;">
+        <div class="bar-rows">
+          <div class="bar-row"><span class="bar-label">카탈로그 mAP</span><div class="bar-track"><div class="bar-fill" style="width:95%;"></div></div><span class="bar-value">0.985</span></div>
+          <div class="bar-row"><span class="bar-label">실사용 Recall (기본모델)</span><div class="bar-track"><div class="bar-fill faint" style="width:15%;"></div></div><span class="bar-value">0.077</span></div>
+          <div class="bar-row"><span class="bar-label">실사용 Recall (YOLO11s)</span><div class="bar-track"><div class="bar-fill faint" style="width:22%;"></div></div><span class="bar-value">0.107</span></div>
+          <div class="bar-row"><span class="bar-label">실사용 Recall (합성 최고)</span><div class="bar-track"><div class="bar-fill faint" style="width:35%;"></div></div><span class="bar-value">0.181</span></div>
+        </div>
+        <span class="footer-meta" style="margin-top:15px;">R0 실사용 환경 사진 78장으로 자체 평가</span>
+      </div>
+      
+      <div class="col-half">
+        <div class="stat-card" style="padding: 25px 35px;">
+          <span class="stat-num">0.98 → 0.08</span>
+          <span class="stat-label">카탈로그 mAP 대비 실도메인 Recall 격차</span>
+        </div>
+        <div class="col-half" style="gap:5px;">
+          <div class="imgph" style="padding:20px;">실제 촬영 환경 알약 예시<br/>(원본 자료 첨부 예정)</div>
+          <span class="footer-meta">"정해진 카탈로그를 잘 찾는 모델"에서 "실제 촬영 환경에도 대응 가능한 범용 모델"로 목표 전환</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Reality Check</span>
+    <span class="footer-meta">PART 5 · 오토라벨링</span>
+  </div>
+</section>
+
+<!-- 20 오토라벨링파이프라인 -->
+<section class="slide" data-label="20 오토라벨링파이프라인">
+  <div class="top-row">
+    <span class="eyebrow">PART 5 · 오토라벨링</span>
+    <span class="counter">25 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">카탈로그 밖 데이터를, 사람 없이 라벨링한다</h1>
+  </div>
+  <div class="body-area">
+    <div class="flow-rows">
+      <div class="flow-step" style="background:#eeeeee;"><span class="flow-step-title">BRONZE</span><span class="flow-step-desc">단일 알약 기준 + item_seq 매칭 초벌 라벨</span></div>
+      <div class="flow-step" style="background:#dddddd;"><span class="flow-step-title">SILVER</span><span class="flow-step-desc">품질 게이팅, Wilson 하한 99.5%+</span></div>
+      <div class="flow-step" style="background:#cccccc;"><span class="flow-step-title">GOLD</span><span class="flow-step-desc">런타임 4/4 통과, 학습 투입 확정</span></div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-num">25,326건</span>
+        <span class="stat-label">식약처 MFDS 데이터 확보</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">30,135개</span>
+        <span class="stat-label">최종 확보 학습 박스</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num" style="font-size:46px;">fail-closed</span>
+        <span class="stat-label">통계 허들 미달 시 사람 개입 없이 자동 배제</span>
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Pipeline</span>
+    <span class="footer-meta">PART 5 · 오토라벨링</span>
+  </div>
+</section>
+
+<!-- 21 신뢰도기반필터링 -->
+<section class="slide" data-label="21 신뢰도기반필터링">
+  <div class="top-row">
+    <span class="eyebrow">PART 5 · 오토라벨링</span>
+    <span class="counter">26 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">'자동 생성'이 아니라 '신뢰도 기반 선별'</h1>
+  </div>
+  <div class="body-area">
+    <div class="two-col" style="align-items: center;">
+      <div class="col-half" style="align-items: center; gap: 30px;">
+        <!-- 도넛차트 디자인 직각 매핑 테두리 처리 -->
+        <div style="width:280px; height:280px; background:conic-gradient(#000000 0% 75%, #cccccc 75% 100%); display:flex; align-items:center; justify-content:center;">
+          <div style="width:180px; height:180px; background:#fff; display:flex; align-items:center; justify-content:center;">
+            <span style="font-size:40px; font-weight:800; color:var(--ink);">75/25</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:20px;">
+          <span style="display:flex; align-items:center; gap:8px; font-size:18px; font-weight:700;"><span style="width:16px; height:16px; background:#000000; display:inline-block;"></span>자동 채택 (conf≥0.7)</span>
+          <span style="display:flex; align-items:center; gap:8px; font-size:18px; font-weight:700;"><span style="width:16px; height:16px; background:#cccccc; display:inline-block;"></span>수동 검증 (conf&lt;0.7)</span>
+        </div>
+      </div>
+      
+      <div class="col-half" style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="stat-card"><span class="stat-num">75%</span><span class="stat-label">오토라벨링 적용율</span></div>
+        <div class="stat-card"><span class="stat-num">25%</span><span class="stat-label">수동 검증 비율</span></div>
+        <div class="stat-card"><span class="stat-num">99.5%</span><span class="stat-label">수동 검증 후 최종 라벨 정확도</span></div>
+        <div class="stat-card"><span class="stat-num">3배</span><span class="stat-label">기존 대비 데이터 확장 속도</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Filtering</span>
+    <span class="footer-meta">PART 5 · 오토라벨링</span>
+  </div>
+</section>
+
+<!-- 22 최종성과 -->
+<section class="slide" data-label="22 최종성과">
+  <div class="top-row">
+    <span class="eyebrow">PART 5 · 오토라벨링</span>
+    <span class="counter">27 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">Phase 1 대비, 실세계 대응력이 완전히 달라졌다</h1>
+  </div>
+  <div class="body-area">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-num">168개</span>
+        <span class="stat-label">총 클래스 수<br/>카탈로그 외 50+ 추가</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">14,000+</span>
+        <span class="stat-label">총 이미지 수<br/>오토라벨링 5,300+ 확보</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">0.72+</span>
+        <span class="stat-label">실세계 Recall<br/>Phase1: 0.08~0.18</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">0.85+</span>
+        <span class="stat-label">실세계 Precision<br/>오탐률 대폭 감소</span>
+      </div>
+    </div>
+    <div class="callout">오토라벨링으로 확장된 데이터셋 재학습 결과, 카탈로그 성능 유지하며 실제 환경 미탐률 획기적으로 감소, <strong>현장 적용 가능성 입증</strong></div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Result</span>
+    <span class="footer-meta">PART 5 · 오토라벨링</span>
+  </div>
+</section>
+
+<!-- P6 마무리&시연 -->
+<section class="slide cover" data-label="P6 마무리&시연">
+  <div class="top-row">
+    <span class="eyebrow">PART 6 / 6</span>
+    <span class="counter">28 / 30</span>
+  </div>
+  <div class="cover-body">
+    <h1 class="cover-title">마무리 &amp; 시연</h1>
+    <div class="tag-row">
+      <span class="tag on">발표: 본인</span>
+      <span class="tag">2장 + 라이브 데모</span>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Part 6</span>
+    <span class="footer-meta">여정 요약 · 상용화 방향 · 라이브 데모</span>
+  </div>
+</section>
+
+<!-- 23 여정요약 -->
+<section class="slide" data-label="23 여정요약">
+  <div class="top-row">
+    <span class="eyebrow">PART 6 · 마무리 &amp; 시연</span>
+    <span class="counter">29 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">카탈로그 특화 → 재정의 → 범용화까지</h1>
+  </div>
+  <div class="body-area">
+    <div class="stat-grid" style="align-items: stretch;">
+      <div class="stat-card" style="background:#eeeeee;">
+        <span class="table-label" style="font-size:26px;">① 카탈로그 특화</span>
+        <p class="num-desc">mAP 0.984<br/>앙상블 상한 0.9994</p>
+      </div>
+      <div class="stat-card" style="background:#dddddd;">
+        <span class="table-label" style="font-size:26px;">② 문제 재정의</span>
+        <p class="num-desc">커버리지가 병목<br/>56 → 118클래스</p>
+      </div>
+      <div class="stat-card" style="background:#cccccc;">
+        <span class="table-label" style="font-size:26px;">③ 범용화</span>
+        <p class="num-desc">오토라벨링<br/>Recall 0.72+</p>
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Summary</span>
+    <span class="footer-meta">PART 6 · 마무리 &amp; 시연</span>
+  </div>
+</section>
+
+<!-- 24 상용화방향 -->
+<section class="slide" data-label="24 상용화방향">
+  <div class="top-row">
+    <span class="eyebrow">PART 6 · 마무리 &amp; 시연</span>
+    <span class="counter">30 / 30</span>
+  </div>
+  <div class="head-block">
+    <h1 class="headline">25,000종 이상을 대응하기 위한 다음 단계</h1>
+  </div>
+  <div class="body-area">
+    <div class="two-col">
+      <div class="table-row" style="flex:1; flex-direction:column; gap:8px;">
+        <span class="table-label" style="font-size:22px;">A안 (단기) · 단일 검출기 구조</span>
+        <span class="table-desc">YOLO11n/RT-DETR로 상위 1,000~3,000종(수요 80%) 커버, closed-set 직접 분류</span>
+      </div>
+      <div class="table-row" style="flex:1; flex-direction:column; gap:8px; background:#e8e8e8;">
+        <span class="table-label" style="font-size:22px;">B안 (중장기) · 검출+임베딩 검색 구조</span>
+        <span class="table-desc">class-agnostic 검출 → 임베딩 추출 → 벡터 검색(top-k). 신약은 재학습 없이 "등록", 미상도 정직하게 인정</span>
+      </div>
+    </div>
+    
+    <div class="flow-rows">
+      <div class="flow-step" style="background:#eeeeee;"><span class="flow-step-title">사진 입력</span></div>
+      <div class="flow-step" style="background:#e5e5e5;"><span class="flow-step-title">Class-Agnostic 검출</span></div>
+      <div class="flow-step" style="background:#dc5c5c5; background:#dddddd;"><span class="flow-step-title">임베딩 추출(512d)</span></div>
+      <div class="flow-step" style="background:#d4d4d4; background:#d0d0d0;"><span class="flow-step-title">벡터 검색(Top-K)</span></div>
+      <div class="flow-step" style="background:#cccccc;"><span class="flow-step-title">카드 제공 / 미상 처리</span></div>
+    </div>
+    
+    <div class="callout" style="background:var(--ink); color:#ffffff;">제품 커버리지 파레토 분포(상위 1,000~3,000종이 수요 80% 커버)가 근거 — "검출→검색 설계, 자동 라벨정리, 앙상블은 대회에서 끝나지 않고 상용화(Phase 3~4)의 토대로 됩니다"</div>
+  </div>
+  <div class="footer-row">
+    <span class="footer-label">Roadmap</span>
+    <span class="footer-meta">PART 6 · 마무리 &amp; 시연</span>
+  </div>
+</section>
+
+</div>
+</body>
+</html>
