@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>카탈로그 특화에서 일반화까지 — 알약 객체탐지 AI 프로젝트</title>
-<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css" />
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css" />
 <style>
   :root {
     --ink: #000000;
@@ -92,11 +92,12 @@
   }
   .dark .sub { color: var(--dark-muted); }
 
-  /* ---- 메인 콘텐츠 영역 ---- */
+  /* ---- 메인 콘텐츠 영역 (세로 중앙 정렬 속성 추가) ---- */
   .body-area {
     flex: 1;
     display: flex;
     flex-direction: column;
+    justify-content: center; /* 제목 영역을 제외한 본문 내부 요소들을 세로 중앙 정렬 */
     gap: 30px;
     min-height: 0;
   }
@@ -1213,8 +1214,8 @@
     <div class="flow-rows">
       <div class="flow-step" style="background:#eeeeee;"><span class="flow-step-title">사진 입력</span></div>
       <div class="flow-step" style="background:#e5e5e5;"><span class="flow-step-title">Class-Agnostic 검출</span></div>
-      <div class="flow-step" style="background:#dc5c5c5; background:#dddddd;"><span class="flow-step-title">임베딩 추출(512d)</span></div>
-      <div class="flow-step" style="background:#d4d4d4; background:#d0d0d0;"><span class="flow-step-title">벡터 검색(Top-K)</span></div>
+      <div class="flow-step" style="background:#dddddd;"><span class="flow-step-title">임베딩 추출(512d)</span></div>
+      <div class="flow-step" style="background:#d0d0d0;"><span class="flow-step-title">벡터 검색(Top-K)</span></div>
       <div class="flow-step" style="background:#cccccc;"><span class="flow-step-title">카드 제공 / 미상 처리</span></div>
     </div>
     
